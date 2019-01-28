@@ -378,3 +378,93 @@ string NNetLanguageIdentifier::SelectTextGivenBeginAndSize(
 }
 
 }  // namespace chrome_lang_id
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+  void allocate_result(chrome_lang_id::NNetLanguageIdentifier::Result result, LanguageResult** out_result) {
+    char * cstr = new char [result.language.length()+1];
+    std::strcpy (cstr, result.language.c_str());
+
+    LanguageResult *ret = new LanguageResult();
+    ret->is_reliable = result.is_reliable;
+    ret->probability = result.probability;
+    ret->proportion = result.proportion;
+    ret->language = cstr;
+
+    (*out_result) = ret;
+  }
+
+  int munge_vector(LanguageResult*** out_results, const std::vector<chrome_lang_id::NNetLanguageIdentifier::Result>& items) {
+    if (items.empty()) {
+      *out_results = NULL;
+      return 0;
+    } else {
+      *out_results = (LanguageResult**)malloc(sizeof(LanguageResult*) * items.size());
+      if (!*out_results)
+        return 0;
+      for (size_t i = 0; i < items.size(); ++i) {
+        LanguageResult *ret = new LanguageResult();
+        (*out_results)[i] = ret;
+        allocate_result(items[i], &ret);
+      }
+    }
+    return items.size();
+  }
+
+  const char* get_UnknownIdentifier() {
+    return chrome_lang_id::NNetLanguageIdentifier::kUnknown;
+  }
+
+  int get_MinNumBytesDefault() {
+    return chrome_lang_id::NNetLanguageIdentifier::kMinNumBytesToConsider;
+  }
+
+  int get_MaxNumBytesDefault() {
+    return chrome_lang_id::NNetLanguageIdentifier::kMaxNumBytesToConsider;
+  }
+
+  int get_MaxNumBytesInput() {
+    return chrome_lang_id::NNetLanguageIdentifier::kMaxNumInputBytesToConsider;
+  }
+
+  CldHandle* Cld_create(int min_num_bytes, int max_num_bytes) {
+    return reinterpret_cast<CldHandle*>(new chrome_lang_id::NNetLanguageIdentifier(min_num_bytes, max_num_bytes));
+  }
+
+  void Cld_destroy(CldHandle* pCld) {
+      delete reinterpret_cast<CldHandle*>(pCld);
+  }
+
+  void Cld_findLanguage(CldHandle* pCld, const char* text, LanguageResult** out_result) {
+    chrome_lang_id::NNetLanguageIdentifier::Result result =
+            reinterpret_cast<chrome_lang_id::NNetLanguageIdentifier*>(pCld)->FindLanguage(text);
+
+    allocate_result(result, out_result);
+  }
+
+  int Cld_findTopNMostFreqLangs(CldHandle* pCld, const char* text, int num_langs, LanguageResult*** out_results) {
+      std::vector<chrome_lang_id::NNetLanguageIdentifier::Result> results = reinterpret_cast<chrome_lang_id::NNetLanguageIdentifier*>(pCld)->FindTopNMostFreqLangs(text, num_langs);
+      return munge_vector(out_results, results);
+  }
+
+  void free_LanguageResult(LanguageResult** result) {
+    delete (*result);
+    delete result;
+    result = NULL;
+  }
+
+  void free_list(LanguageResult*** results, int results_length) {
+    if (results && *results) {
+      for (int i = 0; i < results_length; i++) {
+        //need free((*results)[i]->language); ?
+        delete ((*results)[i]);
+      }
+      delete (*results);
+      *results = NULL;
+    }
+  }
+
+#ifdef __cplusplus
+}
+#endif
