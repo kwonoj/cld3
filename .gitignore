@@ -1,0 +1,5 @@
+.idea
+cmake-build-debug/
+src/**/*.o
+src/*.a
+src/cld_3
