@@ -186,7 +186,7 @@ extern "C" {
 typedef struct CldHandle CldHandle;
 
 typedef struct {
-    char* language = const_cast<char *>(&chrome_lang_id::NNetLanguageIdentifier::kUnknown[0]);
+    char* language = NULL;
     float probability = 0.0;
     bool is_reliable = false;
     float proportion = 0.0;
@@ -209,14 +209,14 @@ LIBCLD_DLL_EXPORTED CldHandle* Cld_create(int min_num_bytes, int max_num_bytes);
 LIBCLD_DLL_EXPORTED void Cld_destroy(CldHandle* pCld);
 
 //Result FindLanguage(const string &text);
-LIBCLD_DLL_EXPORTED void Cld_findLanguage(CldHandle* pCld, const char* text, LanguageResult** out_result);
+LIBCLD_DLL_EXPORTED void Cld_findLanguage(CldHandle* pCld, const char* text, LanguageResult* out_result);
 
 //std::vector<Result> FindTopNMostFreqLangs(const string &text, int num_langs);
-LIBCLD_DLL_EXPORTED int Cld_findTopNMostFreqLangs(CldHandle* pCld, const char* text, int num_langs, LanguageResult*** out_results);
+LIBCLD_DLL_EXPORTED int Cld_findTopNMostFreqLangs(CldHandle* pCld, const char* text, int num_langs, LanguageResult** out_results);
 
-LIBCLD_DLL_EXPORTED void free_LanguageResult(LanguageResult** result);
+LIBCLD_DLL_EXPORTED void free_LanguageResult(LanguageResult* result);
 
-LIBCLD_DLL_EXPORTED void free_list(LanguageResult*** results, int results_length);
+LIBCLD_DLL_EXPORTED void free_list(LanguageResult** results, int results_length);
 
 #ifdef __cplusplus
 }
